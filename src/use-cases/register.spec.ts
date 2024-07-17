@@ -1,15 +1,20 @@
-import { expect, describe, it } from 'vitest'
+import { expect, describe, it, beforeEach } from 'vitest'
 import { RegisterUseCase } from './register'
 import { compare } from 'bcryptjs'
 import { InMemoryUsersRepository } from '@/repositories/in-memory/in-memory-users-repository'
 import { UserAlreadyExistsError } from './errors/user-already-exists-error'
 
-describe('Register use case', () => {
-  it('should create a new user', async () => {
-    const inMemoryUsersRepository = new InMemoryUsersRepository()
-    const registerUseCase = new RegisterUseCase(inMemoryUsersRepository)
+let usersRepository: InMemoryUsersRepository
+let sut: RegisterUseCase
 
-    const { user } = await registerUseCase.handle({
+describe('Register use case', () => {
+  beforeEach(() => {
+    usersRepository = new InMemoryUsersRepository()
+    sut = new RegisterUseCase(usersRepository)
+  })
+
+  it('should create a new user', async () => {
+    const { user } = await sut.handle({
       name: 'John Doe',
       email: 'john.doe@example.com',
       password: 'password123',
@@ -21,10 +26,7 @@ describe('Register use case', () => {
   })
 
   it('should hash user password upon registration', async () => {
-    const inMemoryUsersRepository = new InMemoryUsersRepository()
-    const registerUseCase = new RegisterUseCase(inMemoryUsersRepository)
-
-    const { user } = await registerUseCase.handle({
+    const { user } = await sut.handle({
       name: 'John Doe',
       email: 'john.doe@example.com',
       password: 'password123',
@@ -36,19 +38,16 @@ describe('Register use case', () => {
   })
 
   it('shouldnt be able to create user with same email', async () => {
-    const inMemoryUsersRepository = new InMemoryUsersRepository()
-    const registerUseCase = new RegisterUseCase(inMemoryUsersRepository)
-
     const email = 'john.doe@example.com'
 
-    await registerUseCase.handle({
+    await sut.handle({
       name: 'John Doe',
       email,
       password: 'password123',
     })
 
     await expect(() =>
-      registerUseCase.handle({
+      sut.handle({
         name: 'John Doe',
         email,
         password: 'password123',

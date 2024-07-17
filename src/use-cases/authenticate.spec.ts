@@ -1,15 +1,19 @@
-import { expect, describe, it } from 'vitest'
+import { expect, describe, it, beforeEach } from 'vitest'
 import { InMemoryUsersRepository } from '@/repositories/in-memory/in-memory-users-repository'
 import { AuthenticateUseCase } from './authenticate'
 import { InvalidCredentials } from './errors/invalid-credentials-error'
 import { hash } from 'bcryptjs'
 
-describe('Register use case', () => {
-  it('should be able to authenticate', async () => {
-    const inMemoryUsersRepository = new InMemoryUsersRepository()
-    const sut = new AuthenticateUseCase(inMemoryUsersRepository)
+let usersRepository: InMemoryUsersRepository
+let sut: AuthenticateUseCase
 
-    await inMemoryUsersRepository.create({
+describe('Register use case', () => {
+  beforeEach(() => {
+    usersRepository = new InMemoryUsersRepository()
+    sut = new AuthenticateUseCase(usersRepository)
+  })
+  it('should be able to authenticate', async () => {
+    await usersRepository.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
       password_hash: await hash('password123', 6),
@@ -24,9 +28,6 @@ describe('Register use case', () => {
   })
 
   it('shouldnt be able to authenticate with wrong email', async () => {
-    const inMemoryUsersRepository = new InMemoryUsersRepository()
-    const sut = new AuthenticateUseCase(inMemoryUsersRepository)
-
     await expect(() =>
       sut.handle({
         email: 'test@example.com',
@@ -36,10 +37,7 @@ describe('Register use case', () => {
   })
 
   it('shouldnt be able to authenticate if the password hashes dont match', async () => {
-    const inMemoryUsersRepository = new InMemoryUsersRepository()
-    const sut = new AuthenticateUseCase(inMemoryUsersRepository)
-
-    await inMemoryUsersRepository.create({
+    await usersRepository.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
       password_hash: await hash('password123', 6),
